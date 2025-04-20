@@ -1,6 +1,19 @@
 
 # Hebrew Handwritten Character Classifier (Keras)
 
+##  Contact Info
+
+Shlomo Hadar - Shlomoh03@gmail.com
+Matan Tenenboim - tenenmatan@gmail.com
+
+---
+
+## Environment
+- Microsoft Windows 10
+- Python 3.10
+
+---
+
 ## 📌 Overview
 
 This program is a complete pipeline for **classifying Hebrew handwritten characters** using a **Convolutional Neural Network (CNN)** in **Keras**. It includes:
