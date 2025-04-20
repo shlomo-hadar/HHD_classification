@@ -3,8 +3,8 @@
 
 ##  Contact Info
 
-Shlomo Hadar - Shlomoh03@gmail.com
-Matan Tenenboim - tenenmatan@gmail.com
+- Shlomo Hadar - Shlomoh03@gmail.com
+- Matan Tenenboim - tenenmatan@gmail.com
 
 ---
 
