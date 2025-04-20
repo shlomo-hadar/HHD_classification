@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from sklearn.metrics import accuracy_score
 from datetime import datetime
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
@@ -8,11 +9,125 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import Sequential
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
-
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import pandas as pd
+from math import inf
 # import os
 # import cv2
 # import numpy as np
 # import matplotlib.pyplot as plt
+
+max_accuracy = -inf
+show: bool = False
+show_conf_matrix: bool = False
+
+
+def output_model_to_json(model):
+    model_json = model.to_json()
+    with open("final_model_configuration.json", "w") as json_file:
+        json_file.write(model_json)
+
+
+def plot_and_save_confusion_matrix(model, x_test, y_test, class_names=None, normalize=False, csv_path='confusion_matrix.csv'):
+    """
+    Plots and saves a confusion matrix to CSV.
+
+    Parameters:
+    - model: Trained Keras model
+    - x_test: Test images
+    - y_test: True test labels (one-hot or label encoded)
+    - class_names: List of class labels (e.g., Hebrew letters)
+    - normalize: If True, normalize the confusion matrix
+    - csv_path: File path to save the CSV matrix
+    """
+    # Predict class probabilities and convert to labels
+    global show_conf_matrix
+    y_pred_probs = model.predict(x_test)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+
+    # Handle one-hot encoded y_test
+    if y_test.ndim > 1 and y_test.shape[1] > 1:
+        y_true = np.argmax(y_test, axis=1)
+    else:
+        y_true = y_test
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred, normalize='true' if normalize else None)
+
+    # Default class names if not provided
+    if class_names is None:
+        class_names = [f"{i}" for i in range(cm.shape[0])]
+
+    # Save to CSV using pandas
+    df_cm = pd.DataFrame(cm, index=class_names, columns=class_names)
+    df_cm.to_csv(csv_path)
+    print(f"Confusion matrix saved to {csv_path}")
+
+    # Plot the matrix
+    if show_conf_matrix:
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+        fig, ax = plt.subplots(figsize=(12, 10))
+        disp.plot(ax=ax, cmap='Blues', xticks_rotation=45)
+        plt.title("Confusion Matrix" + (" (Normalized)" if normalize else ""))
+        plt.tight_layout()
+        plt.show()
+
+
+def evaluate_per_letter_accuracy(model, x_test, y_test, class_names=None):
+    """
+    Evaluates and prints per-class accuracy and average accuracy for a classification model.
+
+    Parameters:
+    - model: Trained Keras model.
+    - x_test: Test input data (e.g., images).
+    - y_test: Test labels (one-hot encoded or label-encoded).
+    - class_names: Optional list of class names (e.g., Hebrew letters). If None, class indices will be used.
+
+    Returns:
+    - Dictionary with per-class accuracies and average accuracy.
+    """
+    # Predict class probabilities
+    y_pred_probs = model.predict(x_test)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+
+    # Handle both one-hot and label-encoded y_test
+    if y_test.ndim > 1 and y_test.shape[1] > 1:
+        y_true = np.argmax(y_test, axis=1)
+    else:
+        y_true = y_test
+
+    num_classes = np.max(y_true) + 1
+    class_accuracies = {}
+
+    print("Per-letter accuracy:")
+
+    for i in range(num_classes):
+        idx = np.where(y_true == i)[0]
+        if len(idx) == 0:
+            acc = 0
+            label = f"Class {i} (no samples)"
+        else:
+            acc = accuracy_score(y_true[idx], y_pred[idx])
+            label = class_names[i] if class_names else f"Letter {i}"
+
+        class_accuracies[label] = acc
+        print(f"{label}: {acc:.4f}")
+
+    avg_acc = np.mean(list(class_accuracies.values()))
+    print(f"\nAverage accuracy across all letters: {avg_acc:.4f}")
+
+    with open('final_model_train_test_per_letter_accuracy.txt', 'w') as output_file:
+        output_file.write(f'{"Letter":<18} : {"Accuracy":<8}\n')
+        for name, val in class_accuracies.items():
+            output_file.write(f'{name:<18} : {round(val, 2):<8}\n')
+        output_file.write(f'---------------------------------\n')
+        output_file.write(f'{"AVG":<18} : {round(avg_acc, 2):<8}\n')
+
+    return {
+        "per_class_accuracy": class_accuracies,
+        "average_accuracy": avg_acc
+    }
+
 
 def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
     """
@@ -23,6 +138,7 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.optimizers import Adam
     from tensorflow.keras.callbacks import EarlyStopping
+    global max_accuracy, show
 
     results = []
     configurations = [
@@ -152,8 +268,18 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
         plt.xlabel('epochs')
         plt.ylabel('loss')
         plt.legend()
+        current_accuracy = float(history.history['accuracy'][-1])
+        if current_accuracy > max_accuracy:
+            plt.savefig('final_model_precision_and_loss_plot.png')
+            max_accuracy = current_accuracy
+            output_model_to_json(model=model)
+            evaluate_per_letter_accuracy(model=model, x_test=X_test, y_test=y_test)
+            plot_and_save_confusion_matrix(model=model, x_test=X_test, y_test=y_test)
 
         plt.tight_layout()
+        if not show:
+            plt.clf()
+            continue
         plt.show()
 
     # הצגת סיכום התוצאות
@@ -168,7 +294,7 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
     plt.subplot(2, 1, 1)
     for result in results:
         plt.plot(result['history']['val_accuracy'], label=result['config'])
-    plt.title('השוואת persicion validation בין הקונפיגורציות השונות')
+    plt.title('compare persicion validation per configuration')
     plt.xlabel('epochs')
     plt.ylabel('persicion validation')
     plt.legend(loc='lower right')
@@ -177,13 +303,13 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
     plt.subplot(2, 1, 2)
     for result in results:
         plt.plot(result['history']['val_loss'], label=result['config'])
-    plt.title('השוואת שגיאת validation בין הקונפיגורציות השונות')
+    plt.title(' validation error per configuration')
     plt.xlabel('epochs')
-    plt.ylabel('שגיאת validation')
+    plt.ylabel('validation error')
     plt.legend(loc='upper right')
 
     plt.tight_layout()
-    plt.show()
+    plt.show() if show else None
 
     return results
 
