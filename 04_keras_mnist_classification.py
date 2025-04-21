@@ -248,6 +248,7 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
             'history': history.history
         })
 
+
         # הצגת גרפים
         plt.figure(figsize=(12, 5))
 
@@ -260,6 +261,7 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
         plt.ylabel('persicion')
         plt.legend()
 
+
         # גרף loss
         plt.subplot(1, 2, 2)
         plt.plot(history.history['loss'], label='train')
@@ -268,7 +270,9 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
         plt.xlabel('epochs')
         plt.ylabel('loss')
         plt.legend()
-        current_accuracy = float(history.history['accuracy'][-1])
+
+        # current_accuracy = float(history.history['accuracy'][-1])
+        current_accuracy = float(test_acc)
         if current_accuracy > max_accuracy:
             plt.savefig('final_model_precision_and_loss_plot.png')
             max_accuracy = current_accuracy
