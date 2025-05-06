@@ -1,0 +1,6 @@
+Final Model Configuration:
+Best Configuration: 1. Without augmentation
+Test Accuracy: 0.8775
+
+Loss curves are saved in final_model_precision_and_loss_plot.png
+

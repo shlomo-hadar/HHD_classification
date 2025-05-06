@@ -129,7 +129,7 @@ def evaluate_per_letter_accuracy(model, x_test, y_test, class_names=None):
     }
 
 
-def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
+def train_with_different_regularizations_NN(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
     """
     train המודל במספר קונפיגורציות שונות של רגולריזציה
     """
@@ -318,6 +318,434 @@ def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test,
     return results
 
 
+# def train_with_different_regularizations_CNN(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
+# # def train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
+#     """
+#     Trains a CNN model following the architecture specified in the assignment:
+#     INPUT=>[CONV=>RELU=>CONV=>RELU=>POOL=>DO]*3=>FC=>RELU=>DO=>FC
+#
+#     Tests with and without data augmentation.
+#     """
+#     from tensorflow.keras.models import Sequential
+#     from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPooling2D
+#     from tensorflow.keras.optimizers import Adam
+#     from tensorflow.keras.callbacks import EarlyStopping
+#     from tensorflow.keras.preprocessing.image import ImageDataGenerator
+#     global max_accuracy, show
+#
+#     results = []
+#
+#     # Define configurations for testing
+#     configurations = [
+#         {
+#             'name': '1. Without augmentation',
+#             'use_augmentation': False
+#         },
+#         {
+#             'name': '2. With augmentation',
+#             'use_augmentation': True
+#         }
+#     ]
+#
+#     for config in configurations:
+#         print(f"\n\n========== Training: {config['name']} ==========")
+#
+#         # Create the CNN model as per specifications
+#         model = Sequential()
+#
+#         # First iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 32 filters
+#         model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
+#         model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+#         model.add(MaxPooling2D(pool_size=(2, 2)))
+#         model.add(Dropout(0.25))
+#
+#         # Second iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 64 filters
+#         model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+#         model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+#         model.add(MaxPooling2D(pool_size=(2, 2)))
+#         model.add(Dropout(0.25))
+#
+#         # Third iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 128 filters
+#         model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+#         model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+#         model.add(MaxPooling2D(pool_size=(2, 2)))
+#         model.add(Dropout(0.25))
+#
+#         # FC=>RELU=>DO
+#         model.add(Flatten())
+#         model.add(Dense(512, activation='relu'))
+#         model.add(Dropout(0.5))
+#
+#         # Output layer
+#         model.add(Dense(num_classes, activation='softmax'))
+#
+#         # Print model summary
+#         model.summary()
+#
+#         # Compile the model
+#         model.compile(
+#             optimizer=Adam(learning_rate=0.001),
+#             loss='categorical_crossentropy',
+#             metrics=['accuracy']
+#         )
+#
+#         # Define Early Stopping
+#         early_stop = EarlyStopping(
+#             monitor='val_loss',
+#             patience=10,
+#             restore_best_weights=True,
+#             verbose=1
+#         )
+#
+#         # Train the model
+#         if config['use_augmentation']:
+#             # Setup data augmentation - Note: Assuming X_train is already normalized (divided by 255)
+#             # datagen = ImageDataGenerator(
+#             #     width_shift_range=0.1,
+#             #     height_shift_range=0.1,
+#             #     horizontal_flip=False,
+#             #     vertical_flip=False,
+#             #     rotation_range=10,
+#             #     shear_range=0.2,
+#             #     brightness_range=(0.8, 1.2),  # Less aggressive brightness change
+#             #     # No rescaling since data is already normalized in preprocessing step
+#             # )
+#
+#             # Train using data augmentation
+#             datagen = ImageDataGenerator(
+#                 width_shift_range=0.1,
+#                 height_shift_range=0.1,
+#                 rotation_range=8,
+#                 shear_range=0.15,
+#                 zoom_range=0.1,
+#                 brightness_range=(0.9, 1.1),
+#                 horizontal_flip=True,
+#                 fill_mode='nearest'
+#             )
+#
+#             # Fit on training data if needed (not mandatory for this setup)
+#             # datagen.fit(X_train)
+#
+#             # Train using updated ImageDataGenerator with .fit()
+#             history = model.fit(
+#                 datagen.flow(X_train, y_train, batch_size=64, shuffle=True),
+#                 steps_per_epoch=int(np.ceil(len(X_train) / 64)),
+#                 epochs=50,
+#                 validation_data=(X_val, y_val),
+#                 callbacks=[early_stop],
+#                 verbose=1
+#             )
+#         else:
+#             # Train without data augmentation
+#             history = model.fit(
+#                 X_train, y_train,
+#                 batch_size=64,
+#                 epochs=50,
+#                 validation_data=(X_val, y_val),
+#                 callbacks=[early_stop],
+#                 verbose=1
+#             )
+#
+#         # Evaluate the model on test set
+#         test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+#         print(f"Accuracy on test set: {test_acc:.4f}")
+#
+#         # Save results
+#         results.append({
+#             'config': config['name'],
+#             'test_accuracy': test_acc,
+#             'history': history.history
+#         })
+#
+#         # Plot and save graphs
+#         plt.figure(figsize=(12, 5))
+#
+#         # Accuracy graph
+#         plt.subplot(1, 2, 1)
+#         plt.plot(history.history['accuracy'], label='train')
+#         plt.plot(history.history['val_accuracy'], label='validation')
+#         plt.title(f'Accuracy - {config["name"]}')
+#         plt.xlabel('epochs')
+#         plt.ylabel('accuracy')
+#         plt.legend()
+#
+#         # Loss graph
+#         plt.subplot(1, 2, 2)
+#         plt.plot(history.history['loss'], label='train')
+#         plt.plot(history.history['val_loss'], label='validation')
+#         plt.title(f'Loss - {config["name"]}')
+#         plt.xlabel('epochs')
+#         plt.ylabel('loss')
+#         plt.legend()
+#
+#         # Save the best model
+#         current_accuracy = float(test_acc)
+#         if current_accuracy > max_accuracy:
+#             plt.savefig('final_model_precision_and_loss_plot.png')
+#             max_accuracy = current_accuracy
+#             output_model_to_json(model=model)
+#             evaluate_per_letter_accuracy(model=model, x_test=X_test, y_test=y_test)
+#             plot_and_save_confusion_matrix(model=model, x_test=X_test, y_test=y_test)
+#
+#         plt.tight_layout()
+#         if show:
+#             plt.show()
+#         else:
+#             plt.clf()
+#
+#     # Summary of results
+#     print("\n\n===== Results Summary =====")
+#     for result in sorted(results, key=lambda x: x['test_accuracy'], reverse=True):
+#         print(f"Configuration: {result['config']}, Test Accuracy: {result['test_accuracy']:.4f}")
+#
+#     # Compare all configurations in one graph
+#     plt.figure(figsize=(15, 10))
+#
+#     # Validation accuracy graph
+#     plt.subplot(2, 1, 1)
+#     for result in results:
+#         plt.plot(result['history']['val_accuracy'], label=result['config'])
+#     plt.title('Validation Accuracy Comparison')
+#     plt.xlabel('epochs')
+#     plt.ylabel('validation accuracy')
+#     plt.legend(loc='lower right')
+#
+#     # Validation loss graph
+#     plt.subplot(2, 1, 2)
+#     for result in results:
+#         plt.plot(result['history']['val_loss'], label=result['config'])
+#     plt.title('Validation Loss Comparison')
+#     plt.xlabel('epochs')
+#     plt.ylabel('validation loss')
+#     plt.legend(loc='upper right')
+#
+#     plt.tight_layout()
+#     if show:
+#         plt.show()
+#
+#     # Create results.txt file
+#     with open('results.txt', 'w') as f:
+#         f.write("Final Model Configuration:\n")
+#
+#         # Find the best configuration
+#         best_config = max(results, key=lambda x: x['test_accuracy'])
+#         f.write(f"Best Configuration: {best_config['config']}\n")
+#         f.write(f"Test Accuracy: {best_config['test_accuracy']:.4f}\n\n")
+#
+#         # Refer to the saved plot
+#         f.write("Loss curves are saved in final_model_precision_and_loss_plot.png\n\n")
+#
+#     return results
+
+
+def train_with_different_regularizations_CNN(X_train, y_train, X_val, y_val, X_test, y_test, input_shape, num_classes):
+    """
+    Trains a CNN model following the architecture specified in the assignment:
+    INPUT=>[CONV=>RELU=>CONV=>RELU=>POOL=>DO]*3=>FC=>RELU=>DO=>FC
+
+    Tests with and without data augmentation.
+    """
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPooling2D
+    from tensorflow.keras.optimizers import Adam
+    from tensorflow.keras.callbacks import EarlyStopping
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    global max_accuracy, show
+
+    results = []
+
+    # Define configurations for testing
+    configurations = [
+        {
+            'name': '1. Without augmentation',
+            'use_augmentation': False
+        },
+        {
+            'name': '2. With augmentation',
+            'use_augmentation': True
+        }
+    ]
+
+    for config in configurations:
+        print(f"\n\n========== Training: {config['name']} ==========")
+
+        # Create the CNN model as per specifications
+        model = Sequential()
+
+        # First iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 32 filters
+        model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
+        model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        # Second iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 64 filters
+        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        # Third iteration: CONV=>RELU=>CONV=>RELU=>POOL=>DO with 128 filters
+        model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+        model.add(Conv2D(128, (3, 3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        # FC=>RELU=>DO
+        model.add(Flatten())
+        model.add(Dense(512, activation='relu'))
+        model.add(Dropout(0.5))
+
+        # Output layer
+        model.add(Dense(num_classes, activation='softmax'))
+
+        # Print model summary
+        model.summary()
+
+        # Compile the model
+        model.compile(
+            optimizer=Adam(learning_rate=0.001),
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
+
+        # Define Early Stopping
+        early_stop = EarlyStopping(
+            monitor='val_loss',
+            patience=10,
+            restore_best_weights=True,
+            verbose=1
+        )
+
+        # Train the model
+        if config['use_augmentation']:
+            # Setup data augmentation
+            datagen = ImageDataGenerator(
+                width_shift_range=0.1,
+                height_shift_range=0.1,
+                horizontal_flip=False,
+                vertical_flip=False,
+                rotation_range=10,
+                shear_range=0.2,
+                brightness_range=(0.2, 1.8),
+                rescale=1. / 255 # This should be applied only if data isn't already normalized
+            )
+
+            # Fit the datagen on the training data
+            datagen.fit(X_train)
+
+            # Train using data augmentation
+            history = model.fit(
+                datagen.flow(X_train, y_train, batch_size=64),
+                steps_per_epoch=len(X_train) // 64,
+                epochs=50,
+                validation_data=(X_val, y_val),
+                callbacks=[early_stop],
+                verbose=1
+            )
+        else:
+            # Train without data augmentation
+            history = model.fit(
+                X_train, y_train,
+                batch_size=64,
+                epochs=50,
+                validation_data=(X_val, y_val),
+                callbacks=[early_stop],
+                verbose=1
+            )
+
+        # Evaluate the model on test set
+        test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+        print(f"Accuracy on test set: {test_acc:.4f}")
+
+        # Save results
+        results.append({
+            'config': config['name'],
+            'test_accuracy': test_acc,
+            'history': history.history
+        })
+
+        # Plot and save graphs
+        plt.figure(figsize=(12, 5))
+
+        # Accuracy graph
+        plt.subplot(1, 2, 1)
+        plt.plot(history.history['accuracy'], label='train')
+        plt.plot(history.history['val_accuracy'], label='validation')
+        plt.title(f'Accuracy - {config["name"]}')
+        plt.xlabel('epochs')
+        plt.ylabel('accuracy')
+        plt.legend()
+
+        # Loss graph
+        plt.subplot(1, 2, 2)
+        plt.plot(history.history['loss'], label='train')
+        plt.plot(history.history['val_loss'], label='validation')
+        plt.title(f'Loss - {config["name"]}')
+        plt.xlabel('epochs')
+        plt.ylabel('loss')
+        plt.legend()
+
+        # Save the best model
+        current_accuracy = float(test_acc)
+        if current_accuracy > max_accuracy:
+            plt.savefig('final_model_precision_and_loss_plot.png')
+            max_accuracy = current_accuracy
+            output_model_to_json(model=model)
+            evaluate_per_letter_accuracy(model=model, x_test=X_test, y_test=y_test)
+            plot_and_save_confusion_matrix(model=model, x_test=X_test, y_test=y_test)
+
+        plt.tight_layout()
+        if show:
+            plt.show()
+        else:
+            plt.clf()
+
+    # Summary of results
+    print("\n\n===== Results Summary =====")
+    for result in sorted(results, key=lambda x: x['test_accuracy'], reverse=True):
+        print(f"Configuration: {result['config']}, Test Accuracy: {result['test_accuracy']:.4f}")
+
+    # Compare all configurations in one graph
+    plt.figure(figsize=(15, 10))
+
+    # Validation accuracy graph
+    plt.subplot(2, 1, 1)
+    for result in results:
+        plt.plot(result['history']['val_accuracy'], label=result['config'])
+    plt.title('Validation Accuracy Comparison')
+    plt.xlabel('epochs')
+    plt.ylabel('validation accuracy')
+    plt.legend(loc='lower right')
+
+    # Validation loss graph
+    plt.subplot(2, 1, 2)
+    for result in results:
+        plt.plot(result['history']['val_loss'], label=result['config'])
+    plt.title('Validation Loss Comparison')
+    plt.xlabel('epochs')
+    plt.ylabel('validation loss')
+    plt.legend(loc='upper right')
+
+    plt.tight_layout()
+    if show:
+        plt.show()
+
+    # Create results.txt file
+    with open('results.txt', 'w') as f:
+        f.write("Final Model Configuration:\n")
+
+        # Find the best configuration
+        best_config = max(results, key=lambda x: x['test_accuracy'])
+        f.write(f"Best Configuration: {best_config['config']}\n")
+        f.write(f"Test Accuracy: {best_config['test_accuracy']:.4f}\n\n")
+
+        # Refer to the saved plot
+        f.write("Loss curves are saved in final_model_precision_and_loss_plot.png\n\n")
+
+    return results
+
+
+
 # דוגמת קריאה לפונקציה (יש להוסיף בסוף הקוד הראשי):
 # results = train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test, y_test, input_shape=(32, 32, 1), num_classes=27)
 
@@ -428,18 +856,19 @@ X_val = X_test[len(X_test)//2:]
 y_test = y_test[:len(y_test)//2]
 y_val = y_test[len(y_test)//2:]
 # בניית המודל
-model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(img_size, img_size, 1)),
-    MaxPooling2D(pool_size=(2, 2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dense(num_classes, activation='softmax')
-])
+# model = Sequential([
+#     Conv2D(32, (3, 3), activation='relu', input_shape=(img_size, img_size, 1)),
+#     MaxPooling2D(pool_size=(2, 2)),
+#     Flatten(),
+#     Dense(128, activation='relu'),
+#     Dense(num_classes, activation='softmax')
+# ])
+#
+# model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+#
+# # train
+# # model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
+# model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val))
 
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-# train
-# model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
-model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val))
-
-train_with_different_regularizations(X_train, y_train, X_val, y_val, X_test, y_test, input_shape=(img_size, img_size, 1), num_classes=num_classes)
+# train_with_different_regularizations_NN(X_train, y_train, X_val, y_val, X_test, y_test, input_shape=(img_size, img_size, 1), num_classes=num_classes)
+train_with_different_regularizations_CNN(X_train, y_train, X_val, y_val, X_test, y_test, input_shape=(img_size, img_size, 1), num_classes=num_classes)
