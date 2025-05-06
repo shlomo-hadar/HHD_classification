@@ -8,6 +8,11 @@
 
 ---
 
+## Data Source
+- I. Rabaev, B. Kurar Barakat, A. Churkin and J. El-Sana. The HHD Dataset. The 17th International Conference on Frontiers in Handwriting Recognition, pp. 228-233, 2020. https://www.researchgate.net/publication/343880780_The_HHD_Dataset
+
+---
+
 ## Environment
 - Microsoft Windows 10
 - Python 3.10
