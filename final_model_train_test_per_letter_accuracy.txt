@@ -2,29 +2,29 @@ Letter             : Accuracy
 Letter 0           : 0.96    
 Letter 1           : 0.8     
 Letter 2           : 0.96    
-Letter 3           : 0.83    
-Letter 4           : 0.79    
+Letter 3           : 0.87    
+Letter 4           : 0.89    
 Letter 5           : 0.55    
 Letter 6           : 0.94    
 Letter 7           : 0.89    
-Letter 8           : 0.88    
+Letter 8           : 0.92    
 Letter 9           : 0.94    
-Letter 10          : 0.87    
-Letter 11          : 0.79    
-Letter 12          : 0.95    
+Letter 10          : 0.83    
+Letter 11          : 0.86    
+Letter 12          : 0.84    
 Letter 13          : 0.95    
 Letter 14          : 1.0     
 Letter 15          : 0.82    
-Letter 16          : 0.93    
+Letter 16          : 1.0     
 Letter 17          : 1.0     
 Letter 18          : 0.92    
-Letter 19          : 0.91    
-Letter 20          : 0.5     
-Letter 21          : 0.95    
-Letter 22          : 0.76    
+Letter 19          : 0.95    
+Letter 20          : 0.8     
+Letter 21          : 1.0     
+Letter 22          : 0.59    
 Letter 23          : 0.96    
-Letter 24          : 0.87    
+Letter 24          : 0.74    
 Letter 25          : 0.94    
 Letter 26          : 0.87    
 ---------------------------------
-AVG                : 0.87    
+AVG                : 0.88    

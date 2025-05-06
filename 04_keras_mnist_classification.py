@@ -808,7 +808,7 @@ def split_data(images, labels):
 
 
 # הגדרות
-data_dir = '.'
+data_dir = './data'
 img_size = 32
 num_classes = 27
 
